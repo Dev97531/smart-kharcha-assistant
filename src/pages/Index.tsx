@@ -2,11 +2,15 @@ import { SummaryCards } from '@/components/SummaryCards';
 import { DonutChart } from '@/components/DonutChart';
 import { RecentTransactions } from '@/components/RecentTransactions';
 import { useFinance } from '@/contexts/FinanceContext';
+import { useAuth } from '@/contexts/AuthContext';
+import { useBackup } from '@/hooks/useBackup';
 import { useNavigate } from 'react-router-dom';
-import { Mic, Plus } from 'lucide-react';
+import { Mic, Plus, Cloud, Download, LogOut, Loader2 } from 'lucide-react';
 
 export default function Dashboard() {
   const { todayTotal, monthTotal, todayByCategory, monthByCategory } = useFinance();
+  const { user, signOut } = useAuth();
+  const { backup, restore, isBacking } = useBackup();
   const navigate = useNavigate();
 
   return (
@@ -15,14 +19,39 @@ export default function Dashboard() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-lg font-bold text-foreground">Smart Kharcha</h1>
-          <p className="text-xs text-muted-foreground">Your AI Finance Assistant</p>
+          <p className="text-xs text-muted-foreground truncate max-w-[180px]">
+            {user?.email || 'Your AI Finance Assistant'}
+          </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
+          <button
+            onClick={backup}
+            disabled={isBacking}
+            title="Backup to cloud"
+            className="w-8 h-8 rounded-lg bg-muted/50 flex items-center justify-center text-muted-foreground hover:text-primary transition-colors disabled:opacity-50"
+          >
+            {isBacking ? <Loader2 size={16} className="animate-spin" /> : <Cloud size={16} />}
+          </button>
+          <button
+            onClick={restore}
+            disabled={isBacking}
+            title="Restore from cloud"
+            className="w-8 h-8 rounded-lg bg-muted/50 flex items-center justify-center text-muted-foreground hover:text-accent transition-colors disabled:opacity-50"
+          >
+            <Download size={16} />
+          </button>
           <button
             onClick={() => navigate('/add')}
-            className="w-9 h-9 rounded-xl bg-muted/50 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
+            className="w-8 h-8 rounded-lg bg-muted/50 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
           >
-            <Plus size={20} />
+            <Plus size={16} />
+          </button>
+          <button
+            onClick={signOut}
+            title="Sign out"
+            className="w-8 h-8 rounded-lg bg-muted/50 flex items-center justify-center text-muted-foreground hover:text-destructive transition-colors"
+          >
+            <LogOut size={16} />
           </button>
         </div>
       </div>
