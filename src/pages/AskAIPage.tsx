@@ -1,8 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
 import { Send, Sparkles, Mic, MicOff, Loader2 } from 'lucide-react';
 import { useFinance } from '@/contexts/FinanceContext';
-import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+import type { Category } from '@/types/finance';
 
 interface Message {
   id: string;
@@ -20,13 +20,12 @@ const quickQuestions = [
 ];
 
 export default function AskAIPage() {
-  const { expenses, lending, todayTotal, monthTotal, toReceive, toPay } = useFinance();
-  const { session } = useAuth();
+  const { expenses, lending, todayTotal, monthTotal, toReceive, toPay, addExpense, addLending } = useFinance();
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
       role: 'assistant',
-      content: 'Hey! 👋 Main hoon tumhara Smart Kharcha AI assistant. Poocho kuch bhi apne finances ke baare mein — spending, budgets, ya koi bhi sawal! 💰',
+      content: 'Hey! 👋 Main hoon tumhara Smart Kharcha AI assistant. Poocho kuch bhi ya bolo "I spent 200 on food" aur main save kar dunga! 💰',
     },
   ]);
   const [input, setInput] = useState('');
@@ -39,12 +38,35 @@ export default function AskAIPage() {
   }, [messages]);
 
   const financeContext = {
-    todayTotal,
-    monthTotal,
-    toReceive,
-    toPay,
+    todayTotal, monthTotal, toReceive, toPay,
     recentExpenses: expenses.slice(0, 20),
     activeLending: lending.filter(l => !l.settled),
+  };
+
+  const handleToolCall = (name: string, args: any) => {
+    if (name === 'add_expense') {
+      addExpense({
+        amount: args.amount,
+        category: (args.category || 'Other') as Category,
+        merchant: args.merchant,
+        note: args.note,
+        date: args.date || new Date().toISOString(),
+        sourceType: 'text',
+        confidence: 0.9,
+      });
+      toast.success(`₹${args.amount} added to ${args.category} ✅`);
+    } else if (name === 'add_lending') {
+      addLending({
+        type: args.type,
+        person: args.person,
+        amount: args.amount,
+        remainingAmount: args.amount,
+        date: new Date().toISOString(),
+        note: args.note,
+        settled: false,
+      });
+      toast.success(`${args.type === 'lent' ? 'Gave' : 'Borrowed'} ₹${args.amount} ${args.type === 'lent' ? 'to' : 'from'} ${args.person} ✅`);
+    }
   };
 
   const handleSend = async (text?: string) => {
@@ -58,11 +80,11 @@ export default function AskAIPage() {
 
     let assistantContent = '';
     const assistantId = crypto.randomUUID();
+    let toolCalls: Record<string, { name: string; arguments: string }> = {};
 
     try {
       const allMessages = [...messages.filter(m => m.id !== '1'), userMsg].map(m => ({
-        role: m.role,
-        content: m.content,
+        role: m.role, content: m.content,
       }));
 
       const resp = await fetch(CHAT_URL, {
@@ -102,24 +124,52 @@ export default function AskAIPage() {
 
           try {
             const parsed = JSON.parse(jsonStr);
-            const content = parsed.choices?.[0]?.delta?.content;
-            if (content) {
-              assistantContent += content;
+            const delta = parsed.choices?.[0]?.delta;
+
+            // Handle text content
+            if (delta?.content) {
+              assistantContent += delta.content;
               setMessages(prev => {
                 const last = prev[prev.length - 1];
                 if (last?.role === 'assistant' && last.id === assistantId) {
-                  return prev.map((m, i) =>
-                    i === prev.length - 1 ? { ...m, content: assistantContent } : m
-                  );
+                  return prev.map((m, i) => i === prev.length - 1 ? { ...m, content: assistantContent } : m);
                 }
                 return [...prev, { id: assistantId, role: 'assistant', content: assistantContent }];
               });
+            }
+
+            // Handle tool calls
+            if (delta?.tool_calls) {
+              for (const tc of delta.tool_calls) {
+                const idx = tc.index ?? 0;
+                if (!toolCalls[idx]) toolCalls[idx] = { name: '', arguments: '' };
+                if (tc.function?.name) toolCalls[idx].name = tc.function.name;
+                if (tc.function?.arguments) toolCalls[idx].arguments += tc.function.arguments;
+              }
             }
           } catch {
             textBuffer = line + '\n' + textBuffer;
             break;
           }
         }
+      }
+
+      // Process tool calls
+      for (const tc of Object.values(toolCalls)) {
+        if (tc.name && tc.arguments) {
+          try {
+            const args = JSON.parse(tc.arguments);
+            handleToolCall(tc.name, args);
+          } catch (e) {
+            console.error('Failed to parse tool call:', e);
+          }
+        }
+      }
+
+      // If no text content but tool calls happened, add confirmation
+      if (!assistantContent && Object.keys(toolCalls).length > 0) {
+        assistantContent = 'Done! ✅ Record saved.';
+        setMessages(prev => [...prev, { id: assistantId, role: 'assistant', content: assistantContent }]);
       }
     } catch (e: any) {
       console.error(e);
@@ -141,19 +191,12 @@ export default function AskAIPage() {
       return;
     }
     const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (isListening) {
-      setIsListening(false);
-      return;
-    }
+    if (isListening) { setIsListening(false); return; }
     const recognition = new SR();
     recognition.lang = 'hi-IN';
     recognition.continuous = false;
     recognition.interimResults = false;
-    recognition.onresult = (e: any) => {
-      const transcript = e.results[0][0].transcript;
-      setInput(transcript);
-      setIsListening(false);
-    };
+    recognition.onresult = (e: any) => { setInput(e.results[0][0].transcript); setIsListening(false); };
     recognition.onerror = () => setIsListening(false);
     recognition.onend = () => setIsListening(false);
     recognition.start();
@@ -166,7 +209,10 @@ export default function AskAIPage() {
         <div className="w-8 h-8 rounded-xl gradient-primary flex items-center justify-center">
           <Sparkles size={16} className="text-primary-foreground" />
         </div>
-        <h1 className="text-lg font-bold text-foreground">Smart Kharcha AI</h1>
+        <div>
+          <h1 className="text-lg font-bold text-foreground">Smart Kharcha AI</h1>
+          <p className="text-[10px] text-muted-foreground">Bolo ya likho — expense save ho jayega!</p>
+        </div>
       </div>
 
       {/* Quick questions */}
@@ -222,7 +268,7 @@ export default function AskAIPage() {
           value={input}
           onChange={e => setInput(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && handleSend()}
-          placeholder="Poocho kuch bhi..."
+          placeholder="Type: spent 200 on food..."
           className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none px-1"
           disabled={isLoading}
         />

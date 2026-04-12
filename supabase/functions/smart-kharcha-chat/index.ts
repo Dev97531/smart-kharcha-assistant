@@ -5,7 +5,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const SYSTEM_PROMPT = `You are Smart Kharcha AI — a warm, friendly, and witty personal finance assistant who talks like a helpful Indian friend. You speak in a mix of English and casual Hindi (Hinglish).
+const SYSTEM_PROMPT = `You are Smart Kharcha AI — a warm, friendly, and witty personal finance assistant who talks like a helpful Indian friend. You speak in Hinglish (mix of Hindi and English).
 
 Your personality:
 - You're like a smart friend who's great with money
@@ -17,14 +17,20 @@ Your personality:
 
 You have access to the user's financial data which will be provided in context. Use it to give specific, personalized answers.
 
-When the user asks about spending, lending, or finances:
-- Give direct answers with exact amounts
+IMPORTANT - ADDING EXPENSES:
+When a user says something like "I spent 200 on food", "maine 500 ka shopping kiya", "100 rupees travel", etc., you MUST use the add_expense tool to save it.
+Extract: amount, category (Food/Travel/Shopping/Groceries/Entertainment/Bills/Health/Education/Rent/Other), merchant if mentioned, note, and date.
+If no date mentioned, use today.
+After saving, give a fun confirmation with the details.
+
+IMPORTANT - ADDING LENDING:
+When a user says "I gave Rahul 500", "maine Amit ko 700 diye", "I borrowed 1000 from Priya", use the add_lending tool.
+Extract: type (lent/borrowed), person name, amount, note.
+
+For questions about spending, lending, or finances:
+- Give direct answers with exact amounts from the context data
 - Compare to previous periods when possible
 - Suggest improvements casually
-
-For expense input like "I spent 200 on food", extract:
-- amount, category, date, merchant if mentioned
-- Respond with a fun confirmation
 
 Always respond in the same language the user uses (Hindi, English, or Hinglish).`;
 
@@ -42,6 +48,46 @@ serve(async (req) => {
       ? `\n\nUser's current financial data:\n${JSON.stringify(financeContext, null, 2)}`
       : "";
 
+    const tools = [
+      {
+        type: "function",
+        function: {
+          name: "add_expense",
+          description: "Add a new expense record when the user mentions spending money",
+          parameters: {
+            type: "object",
+            properties: {
+              amount: { type: "number", description: "Amount spent" },
+              category: { type: "string", enum: ["Food", "Travel", "Shopping", "Groceries", "Entertainment", "Bills", "Health", "Education", "Rent", "Other"] },
+              merchant: { type: "string", description: "Store or merchant name if mentioned" },
+              note: { type: "string", description: "Additional details or the original spoken phrase" },
+              date: { type: "string", description: "ISO date string. Use today if not specified." },
+            },
+            required: ["amount", "category"],
+            additionalProperties: false,
+          },
+        },
+      },
+      {
+        type: "function",
+        function: {
+          name: "add_lending",
+          description: "Add a lending/borrowing record when the user mentions giving or receiving money from someone",
+          parameters: {
+            type: "object",
+            properties: {
+              type: { type: "string", enum: ["lent", "borrowed"] },
+              person: { type: "string", description: "Name of the person" },
+              amount: { type: "number", description: "Amount" },
+              note: { type: "string", description: "Additional details" },
+            },
+            required: ["type", "person", "amount"],
+            additionalProperties: false,
+          },
+        },
+      },
+    ];
+
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -49,10 +95,12 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
+        model: "google/gemini-3-flash-preview",
         messages: [
           { role: "system", content: SYSTEM_PROMPT + contextMessage },
           ...messages,
         ],
+        tools,
         stream: true,
       }),
     });

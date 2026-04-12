@@ -5,10 +5,13 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { FinanceProvider } from "@/contexts/FinanceContext";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { BottomNav } from "@/components/BottomNav";
+import { useTheme } from "@/hooks/useTheme";
 import Index from "./pages/Index";
 import AddExpense from "./pages/AddExpense";
 import LendingPage from "./pages/LendingPage";
 import AskAIPage from "./pages/AskAIPage";
+import MonthlySpend from "./pages/MonthlySpend";
+import ProfilePage from "./pages/ProfilePage";
 import LoginPage from "./pages/LoginPage";
 import NotFound from "./pages/NotFound";
 
@@ -36,6 +39,8 @@ function AppRoutes() {
         <Route path="/add" element={<AddExpense />} />
         <Route path="/lending" element={<LendingPage />} />
         <Route path="/ask" element={<AskAIPage />} />
+        <Route path="/monthly" element={<MonthlySpend />} />
+        <Route path="/profile" element={<ProfilePage />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
       <BottomNav />
@@ -43,19 +48,27 @@ function AppRoutes() {
   );
 }
 
+function ThemedApp() {
+  const { isDark } = useTheme();
+
+  return (
+    <div className={isDark ? 'dark' : ''}>
+      <AuthProvider>
+        <FinanceProvider>
+          <BrowserRouter>
+            <AppRoutes />
+          </BrowserRouter>
+        </FinanceProvider>
+      </AuthProvider>
+    </div>
+  );
+}
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <Sonner />
-      <AuthProvider>
-        <FinanceProvider>
-          <BrowserRouter>
-            <div className="dark">
-              <AppRoutes />
-            </div>
-          </BrowserRouter>
-        </FinanceProvider>
-      </AuthProvider>
+      <ThemedApp />
     </TooltipProvider>
   </QueryClientProvider>
 );
