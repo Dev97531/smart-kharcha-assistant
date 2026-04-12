@@ -5,12 +5,14 @@ import { useFinance } from '@/contexts/FinanceContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useBackup } from '@/hooks/useBackup';
 import { useNavigate } from 'react-router-dom';
-import { Mic, Plus, Cloud, Download, LogOut, Loader2 } from 'lucide-react';
+import { Mic, Plus, Cloud, Sun, Moon, Loader2 } from 'lucide-react';
+import { useTheme } from '@/hooks/useTheme';
 
 export default function Dashboard() {
   const { todayTotal, monthTotal, todayByCategory, monthByCategory } = useFinance();
-  const { user, signOut } = useAuth();
-  const { backup, restore, isBacking } = useBackup();
+  const { user } = useAuth();
+  const { backup, isBacking } = useBackup();
+  const { isDark, toggle: toggleTheme } = useTheme();
   const navigate = useNavigate();
 
   return (
@@ -33,25 +35,17 @@ export default function Dashboard() {
             {isBacking ? <Loader2 size={16} className="animate-spin" /> : <Cloud size={16} />}
           </button>
           <button
-            onClick={restore}
-            disabled={isBacking}
-            title="Restore from cloud"
-            className="w-8 h-8 rounded-lg bg-muted/50 flex items-center justify-center text-muted-foreground hover:text-accent transition-colors disabled:opacity-50"
+            onClick={toggleTheme}
+            title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+            className="w-8 h-8 rounded-lg bg-muted/50 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
           >
-            <Download size={16} />
+            {isDark ? <Sun size={16} /> : <Moon size={16} />}
           </button>
           <button
             onClick={() => navigate('/add')}
             className="w-8 h-8 rounded-lg bg-muted/50 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
           >
             <Plus size={16} />
-          </button>
-          <button
-            onClick={signOut}
-            title="Sign out"
-            className="w-8 h-8 rounded-lg bg-muted/50 flex items-center justify-center text-muted-foreground hover:text-destructive transition-colors"
-          >
-            <LogOut size={16} />
           </button>
         </div>
       </div>

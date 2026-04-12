@@ -1,11 +1,13 @@
-import { Home, PlusCircle, ArrowLeftRight, MessageCircle } from 'lucide-react';
+import { Home, PlusCircle, ArrowLeftRight, MessageCircle, BarChart3, User } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 const tabs = [
   { path: '/', icon: Home, label: 'Home' },
   { path: '/add', icon: PlusCircle, label: 'Add' },
+  { path: '/monthly', icon: BarChart3, label: 'Monthly' },
   { path: '/lending', icon: ArrowLeftRight, label: 'Lending' },
   { path: '/ask', icon: MessageCircle, label: 'Ask AI' },
+  { path: '/profile', icon: User, label: 'Profile' },
 ];
 
 export function BottomNav() {
@@ -21,12 +23,12 @@ export function BottomNav() {
             <button
               key={path}
               onClick={() => navigate(path)}
-              className={`flex flex-col items-center gap-0.5 px-4 py-1 rounded-xl transition-colors ${
+              className={`flex flex-col items-center gap-0.5 px-2 py-1 rounded-xl transition-colors ${
                 active ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
               }`}
             >
-              <Icon size={22} strokeWidth={active ? 2.5 : 1.8} />
-              <span className="text-[10px] font-medium">{label}</span>
+              <Icon size={20} strokeWidth={active ? 2.5 : 1.8} />
+              <span className="text-[9px] font-medium">{label}</span>
             </button>
           );
         })}
