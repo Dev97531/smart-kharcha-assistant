@@ -7,6 +7,12 @@ export function useTheme() {
   });
 
   useEffect(() => {
+    const root = document.documentElement;
+    if (isDark) {
+      root.classList.add('dark');
+    } else {
+      root.classList.remove('dark');
+    }
     localStorage.setItem('sk_theme', isDark ? 'dark' : 'light');
   }, [isDark]);
 

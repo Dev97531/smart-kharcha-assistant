@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Send, Sparkles, Mic, MicOff, Loader2 } from 'lucide-react';
+import { Send, Sparkles, Mic, MicOff, Loader2, X } from 'lucide-react';
 import { useFinance } from '@/contexts/FinanceContext';
 import { toast } from 'sonner';
 import type { Category } from '@/types/finance';
@@ -21,17 +21,14 @@ const quickQuestions = [
 
 export default function AskAIPage() {
   const { expenses, lending, todayTotal, monthTotal, toReceive, toPay, addExpense, addLending } = useFinance();
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: '1',
-      role: 'assistant',
-      content: 'Hey! 👋 Main hoon tumhara Smart Kharcha AI assistant. Poocho kuch bhi ya bolo "I spent 200 on food" aur main save kar dunga! 💰',
-    },
-  ]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const recognitionRef = useRef<any>(null);
+
+  const hasMessages = messages.length > 0;
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -83,7 +80,7 @@ export default function AskAIPage() {
     let toolCalls: Record<string, { name: string; arguments: string }> = {};
 
     try {
-      const allMessages = [...messages.filter(m => m.id !== '1'), userMsg].map(m => ({
+      const allMessages = [...messages, userMsg].map(m => ({
         role: m.role, content: m.content,
       }));
 
@@ -126,7 +123,6 @@ export default function AskAIPage() {
             const parsed = JSON.parse(jsonStr);
             const delta = parsed.choices?.[0]?.delta;
 
-            // Handle text content
             if (delta?.content) {
               assistantContent += delta.content;
               setMessages(prev => {
@@ -138,7 +134,6 @@ export default function AskAIPage() {
               });
             }
 
-            // Handle tool calls
             if (delta?.tool_calls) {
               for (const tc of delta.tool_calls) {
                 const idx = tc.index ?? 0;
@@ -154,7 +149,6 @@ export default function AskAIPage() {
         }
       }
 
-      // Process tool calls
       for (const tc of Object.values(toolCalls)) {
         if (tc.name && tc.arguments) {
           try {
@@ -166,7 +160,6 @@ export default function AskAIPage() {
         }
       }
 
-      // If no text content but tool calls happened, add confirmation
       if (!assistantContent && Object.keys(toolCalls).length > 0) {
         assistantContent = 'Done! ✅ Record saved.';
         setMessages(prev => [...prev, { id: assistantId, role: 'assistant', content: assistantContent }]);
@@ -185,101 +178,169 @@ export default function AskAIPage() {
     }
   };
 
-  const toggleVoice = () => {
+  const startListening = () => {
     if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
       toast.error('Voice not supported in this browser');
       return;
     }
     const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (isListening) { setIsListening(false); return; }
     const recognition = new SR();
     recognition.lang = 'hi-IN';
     recognition.continuous = false;
     recognition.interimResults = false;
-    recognition.onresult = (e: any) => { setInput(e.results[0][0].transcript); setIsListening(false); };
-    recognition.onerror = () => setIsListening(false);
-    recognition.onend = () => setIsListening(false);
+    recognition.onresult = (e: any) => {
+      const transcript = e.results[0][0].transcript;
+      setIsListening(false);
+      recognitionRef.current = null;
+      handleSend(transcript);
+    };
+    recognition.onerror = () => { setIsListening(false); recognitionRef.current = null; };
+    recognition.onend = () => { setIsListening(false); recognitionRef.current = null; };
+    recognitionRef.current = recognition;
     recognition.start();
     setIsListening(true);
   };
 
+  const stopListening = () => {
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
+      recognitionRef.current = null;
+    }
+    setIsListening(false);
+  };
+
   return (
     <div className="page-container flex flex-col h-[calc(100vh-80px)]">
-      <div className="flex items-center gap-2 mb-3">
-        <div className="w-8 h-8 rounded-xl gradient-primary flex items-center justify-center">
-          <Sparkles size={16} className="text-primary-foreground" />
-        </div>
-        <div>
-          <h1 className="text-lg font-bold text-foreground">Smart Kharcha AI</h1>
-          <p className="text-[10px] text-muted-foreground">Bolo ya likho — expense save ho jayega!</p>
-        </div>
-      </div>
+      {!hasMessages ? (
+        /* Landing state — Perplexity-style centered */
+        <div className="flex-1 flex flex-col items-center justify-center">
+          <h1 className="text-xl font-semibold text-foreground mb-1">
+            Hi there! How can I help you <span className="font-bold">today?</span>
+          </h1>
+          <p className="text-xs text-muted-foreground mb-8">
+            Say or type your expense, or ask me anything about your spending
+          </p>
 
-      {/* Quick questions */}
-      <div className="flex gap-2 overflow-x-auto pb-2 mb-3 scrollbar-hide">
-        {quickQuestions.map(q => (
-          <button
-            key={q}
-            onClick={() => handleSend(q)}
-            disabled={isLoading}
-            className="shrink-0 bg-muted/50 text-xs text-muted-foreground px-3 py-1.5 rounded-full hover:bg-muted/80 transition-colors disabled:opacity-50"
-          >
-            {q}
-          </button>
-        ))}
-      </div>
+          {/* Input bar */}
+          <div className="w-full max-w-md glass-card p-2 flex items-center gap-2 mb-6">
+            <input
+              value={input}
+              onChange={e => setInput(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && handleSend()}
+              placeholder="spent 200 on food..."
+              className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none px-2"
+              disabled={isLoading}
+            />
+            <button
+              onClick={() => handleSend()}
+              disabled={isLoading || !input.trim()}
+              className="w-9 h-9 rounded-xl gradient-primary flex items-center justify-center shrink-0 disabled:opacity-50"
+            >
+              <Send size={16} className="text-primary-foreground" />
+            </button>
+          </div>
 
-      {/* Messages */}
-      <div className="flex-1 space-y-3 overflow-y-auto min-h-0 mb-3">
-        {messages.map(m => (
-          <div key={m.id} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'} fade-in`}>
-            <div
-              className={`max-w-[85%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap ${
-                m.role === 'user'
-                  ? 'gradient-primary text-primary-foreground rounded-br-md'
-                  : 'glass-card text-foreground rounded-bl-md'
+          {/* Voice button */}
+          <div className="flex flex-col items-center gap-3 mb-8">
+            <div className={`relative ${isListening ? 'animate-pulse' : ''}`}>
+              {isListening && (
+                <div className="absolute inset-0 rounded-full bg-primary/20 animate-ping" />
+              )}
+              <button
+                onClick={isListening ? stopListening : startListening}
+                className={`mic-button w-16 h-16 ${isListening ? 'listening' : ''}`}
+              >
+                {isListening ? <MicOff size={24} className="text-primary-foreground" /> : <Mic size={24} className="text-primary-foreground" />}
+              </button>
+            </div>
+            <span className={`text-sm font-medium ${isListening ? 'text-primary animate-pulse' : 'text-muted-foreground'}`}>
+              {isListening ? 'Listening...' : 'Say something...'}
+            </span>
+            {isListening && (
+              <button onClick={stopListening} className="w-9 h-9 rounded-full bg-muted/80 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors">
+                <X size={16} />
+              </button>
+            )}
+          </div>
+
+          {/* Quick questions */}
+          <div className="flex flex-wrap gap-2 justify-center max-w-md">
+            {quickQuestions.map(q => (
+              <button
+                key={q}
+                onClick={() => handleSend(q)}
+                disabled={isLoading}
+                className="bg-muted/50 text-xs text-muted-foreground px-3 py-1.5 rounded-full hover:bg-muted/80 transition-colors disabled:opacity-50"
+              >
+                {q}
+              </button>
+            ))}
+          </div>
+        </div>
+      ) : (
+        /* Chat state */
+        <>
+          <div className="flex items-center gap-2 mb-3">
+            <div className="w-8 h-8 rounded-xl gradient-primary flex items-center justify-center">
+              <Sparkles size={16} className="text-primary-foreground" />
+            </div>
+            <div>
+              <h1 className="text-lg font-bold text-foreground">Smart Kharcha AI</h1>
+            </div>
+          </div>
+
+          <div className="flex-1 space-y-3 overflow-y-auto min-h-0 mb-3">
+            {messages.map(m => (
+              <div key={m.id} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'} fade-in`}>
+                <div
+                  className={`max-w-[85%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap ${
+                    m.role === 'user'
+                      ? 'gradient-primary text-primary-foreground rounded-br-md'
+                      : 'glass-card text-foreground rounded-bl-md'
+                  }`}
+                >
+                  {m.content}
+                </div>
+              </div>
+            ))}
+            {isLoading && messages[messages.length - 1]?.role === 'user' && (
+              <div className="flex justify-start">
+                <div className="glass-card px-4 py-2.5 rounded-2xl rounded-bl-md">
+                  <Loader2 size={16} className="animate-spin text-primary" />
+                </div>
+              </div>
+            )}
+            <div ref={messagesEndRef} />
+          </div>
+
+          {/* Chat input */}
+          <div className="glass-card p-2 flex items-center gap-2">
+            <button
+              onClick={isListening ? stopListening : startListening}
+              className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-colors ${
+                isListening ? 'bg-destructive/20 text-destructive' : 'bg-muted/50 text-muted-foreground'
               }`}
             >
-              {m.content}
-            </div>
+              {isListening ? <MicOff size={16} /> : <Mic size={16} />}
+            </button>
+            <input
+              value={input}
+              onChange={e => setInput(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && handleSend()}
+              placeholder="Type: spent 200 on food..."
+              className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none px-1"
+              disabled={isLoading}
+            />
+            <button
+              onClick={() => handleSend()}
+              disabled={isLoading || !input.trim()}
+              className="w-9 h-9 rounded-xl gradient-primary flex items-center justify-center shrink-0 disabled:opacity-50"
+            >
+              <Send size={16} className="text-primary-foreground" />
+            </button>
           </div>
-        ))}
-        {isLoading && messages[messages.length - 1]?.role === 'user' && (
-          <div className="flex justify-start">
-            <div className="glass-card px-4 py-2.5 rounded-2xl rounded-bl-md">
-              <Loader2 size={16} className="animate-spin text-primary" />
-            </div>
-          </div>
-        )}
-        <div ref={messagesEndRef} />
-      </div>
-
-      {/* Input */}
-      <div className="glass-card p-2 flex items-center gap-2">
-        <button
-          onClick={toggleVoice}
-          className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-colors ${
-            isListening ? 'bg-destructive/20 text-destructive' : 'bg-muted/50 text-muted-foreground'
-          }`}
-        >
-          {isListening ? <MicOff size={16} /> : <Mic size={16} />}
-        </button>
-        <input
-          value={input}
-          onChange={e => setInput(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && handleSend()}
-          placeholder="Type: spent 200 on food..."
-          className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none px-1"
-          disabled={isLoading}
-        />
-        <button
-          onClick={() => handleSend()}
-          disabled={isLoading || !input.trim()}
-          className="w-9 h-9 rounded-xl gradient-primary flex items-center justify-center shrink-0 disabled:opacity-50"
-        >
-          <Send size={16} className="text-primary-foreground" />
-        </button>
-      </div>
+        </>
+      )}
     </div>
   );
 }
