@@ -6,22 +6,22 @@
 
 @layer base {
   :root {
-    --background: 0 0% 98%;
-    --foreground: 220 20% 15%;
+    --background: 220 16% 96%;
+    --foreground: 220 20% 12%;
 
     --card: 0 0% 100%;
-    --card-foreground: 220 20% 15%;
+    --card-foreground: 220 20% 12%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 220 20% 15%;
+    --popover-foreground: 220 20% 12%;
 
     --primary: 174 62% 42%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 210 15% 93%;
-    --secondary-foreground: 220 15% 30%;
+    --secondary: 220 14% 92%;
+    --secondary-foreground: 220 15% 25%;
 
-    --muted: 210 12% 92%;
+    --muted: 220 14% 94%;
     --muted-foreground: 215 12% 45%;
 
     --accent: 210 80% 55%;
@@ -36,8 +36,8 @@
     --warning: 38 92% 50%;
     --warning-foreground: 220 25% 7%;
 
-    --border: 210 12% 88%;
-    --input: 210 12% 88%;
+    --border: 220 13% 90%;
+    --input: 220 13% 90%;
     --ring: 174 62% 42%;
 
     --radius: 1rem;
@@ -129,7 +129,12 @@
 
 @layer components {
   .glass-card {
-    @apply bg-card/80 backdrop-blur-xl border border-border/50 rounded-2xl;
+    @apply bg-card border border-border rounded-2xl shadow-sm;
+  }
+
+  .dark .glass-card {
+    @apply bg-card/80 backdrop-blur-xl border-border/50;
+    box-shadow: none;
   }
 
   .gradient-primary {
@@ -148,20 +153,11 @@
   .mic-button {
     @apply relative rounded-full flex items-center justify-center transition-all duration-300;
     background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)));
-    box-shadow: 0 0 30px hsl(var(--primary) / 0.3), 0 0 60px hsl(var(--primary) / 0.1);
+    box-shadow: 0 4px 20px hsl(var(--primary) / 0.3), 0 0 40px hsl(var(--primary) / 0.1);
   }
 
   .mic-button:active {
     transform: scale(0.95);
-  }
-
-  .mic-button.listening {
-    animation: mic-pulse 1.5s ease-in-out infinite;
-  }
-
-  @keyframes mic-pulse {
-    0%, 100% { box-shadow: 0 0 30px hsl(var(--primary) / 0.3), 0 0 60px hsl(var(--primary) / 0.1); }
-    50% { box-shadow: 0 0 40px hsl(var(--primary) / 0.5), 0 0 80px hsl(var(--primary) / 0.2); }
   }
 
   .stat-card {
@@ -184,5 +180,140 @@
   @keyframes fadeIn {
     from { opacity: 0; transform: translateY(8px); }
     to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ===== Voice Orb ===== */
+  .voice-orb-backdrop {
+    background: radial-gradient(ellipse at center, hsl(220 25% 8% / 0.97), hsl(220 30% 4% / 0.99));
+    animation: backdropIn 0.4s ease-out;
+  }
+
+  @keyframes backdropIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  .voice-orb {
+    @apply relative w-40 h-40 rounded-full flex items-center justify-center cursor-pointer;
+    transition: transform 0.3s ease;
+  }
+
+  .voice-orb:active {
+    transform: scale(0.95);
+  }
+
+  .orb-inner {
+    @apply absolute w-24 h-24 rounded-full;
+    background: radial-gradient(circle at 35% 35%, hsl(174 80% 55%), hsl(210 80% 50%), hsl(174 62% 35%));
+    box-shadow: 0 0 40px hsl(174 62% 42% / 0.5), 0 0 80px hsl(174 62% 42% / 0.2);
+    transition: all 0.5s ease;
+  }
+
+  .orb-ring {
+    @apply absolute rounded-full border;
+    border-color: hsl(var(--primary) / 0.15);
+    transition: all 0.5s ease;
+  }
+
+  .orb-ring-1 { @apply w-28 h-28; }
+  .orb-ring-2 { @apply w-32 h-32; }
+  .orb-ring-3 { @apply w-36 h-36; }
+
+  /* Idle */
+  .orb-idle .orb-inner {
+    animation: orbBreath 3s ease-in-out infinite;
+  }
+
+  @keyframes orbBreath {
+    0%, 100% { transform: scale(1); opacity: 0.7; }
+    50% { transform: scale(1.05); opacity: 0.9; }
+  }
+
+  /* Listening */
+  .orb-listening .orb-inner {
+    animation: orbPulse 1.2s ease-in-out infinite;
+    box-shadow: 0 0 50px hsl(174 62% 42% / 0.6), 0 0 100px hsl(174 62% 42% / 0.3);
+  }
+
+  .orb-listening .orb-ring-1 {
+    animation: ringPulse 1.5s ease-in-out infinite;
+    border-color: hsl(var(--primary) / 0.3);
+  }
+  .orb-listening .orb-ring-2 {
+    animation: ringPulse 1.5s ease-in-out infinite 0.2s;
+    border-color: hsl(var(--primary) / 0.2);
+  }
+  .orb-listening .orb-ring-3 {
+    animation: ringPulse 1.5s ease-in-out infinite 0.4s;
+    border-color: hsl(var(--primary) / 0.1);
+  }
+
+  @keyframes orbPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.12); }
+  }
+
+  @keyframes ringPulse {
+    0%, 100% { transform: scale(1); opacity: 0.5; }
+    50% { transform: scale(1.08); opacity: 1; }
+  }
+
+  /* Thinking */
+  .orb-thinking .orb-inner {
+    animation: orbSpin 2s linear infinite;
+    background: radial-gradient(circle at 35% 35%, hsl(38 92% 55%), hsl(174 62% 42%), hsl(210 80% 55%));
+    box-shadow: 0 0 60px hsl(38 92% 50% / 0.4), 0 0 100px hsl(174 62% 42% / 0.2);
+  }
+
+  .orb-thinking .orb-ring-1,
+  .orb-thinking .orb-ring-2,
+  .orb-thinking .orb-ring-3 {
+    animation: ringRotate 3s linear infinite;
+    border-color: hsl(38 92% 50% / 0.2);
+    border-style: dashed;
+  }
+
+  @keyframes orbSpin {
+    0% { transform: rotate(0deg) scale(1); }
+    25% { transform: rotate(90deg) scale(1.05); }
+    50% { transform: rotate(180deg) scale(1); }
+    75% { transform: rotate(270deg) scale(1.05); }
+    100% { transform: rotate(360deg) scale(1); }
+  }
+
+  @keyframes ringRotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  /* Speaking */
+  .orb-speaking .orb-inner {
+    animation: orbSpeak 0.8s ease-in-out infinite;
+    background: radial-gradient(circle at 35% 35%, hsl(152 60% 50%), hsl(174 62% 42%), hsl(210 80% 55%));
+    box-shadow: 0 0 60px hsl(152 60% 42% / 0.5), 0 0 120px hsl(174 62% 42% / 0.3);
+  }
+
+  .orb-speaking .orb-ring-1 {
+    animation: speakRipple 1s ease-out infinite;
+    border-color: hsl(152 60% 42% / 0.3);
+  }
+  .orb-speaking .orb-ring-2 {
+    animation: speakRipple 1s ease-out infinite 0.3s;
+    border-color: hsl(152 60% 42% / 0.2);
+  }
+  .orb-speaking .orb-ring-3 {
+    animation: speakRipple 1s ease-out infinite 0.6s;
+    border-color: hsl(152 60% 42% / 0.1);
+  }
+
+  @keyframes orbSpeak {
+    0%, 100% { transform: scale(1); }
+    30% { transform: scale(1.15); }
+    60% { transform: scale(0.95); }
+  }
+
+  @keyframes speakRipple {
+    0% { transform: scale(1); opacity: 1; }
+    100% { transform: scale(1.3); opacity: 0; }
   }
 }

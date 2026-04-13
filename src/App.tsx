@@ -9,7 +9,6 @@ import { useTheme } from "@/hooks/useTheme";
 import Index from "./pages/Index";
 import AddExpense from "./pages/AddExpense";
 import LendingPage from "./pages/LendingPage";
-import AskAIPage from "./pages/AskAIPage";
 import MonthlySpend from "./pages/MonthlySpend";
 import ProfilePage from "./pages/ProfilePage";
 import LoginPage from "./pages/LoginPage";
@@ -38,7 +37,6 @@ function AppRoutes() {
         <Route path="/" element={<Index />} />
         <Route path="/add" element={<AddExpense />} />
         <Route path="/lending" element={<LendingPage />} />
-        <Route path="/ask" element={<AskAIPage />} />
         <Route path="/monthly" element={<MonthlySpend />} />
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="*" element={<NotFound />} />
@@ -49,18 +47,17 @@ function AppRoutes() {
 }
 
 function ThemedApp() {
-  const { isDark } = useTheme();
+  // useTheme handles the dark class on documentElement
+  useTheme();
 
   return (
-    <div className={isDark ? 'dark' : ''}>
-      <AuthProvider>
-        <FinanceProvider>
-          <BrowserRouter>
-            <AppRoutes />
-          </BrowserRouter>
-        </FinanceProvider>
-      </AuthProvider>
-    </div>
+    <AuthProvider>
+      <FinanceProvider>
+        <BrowserRouter>
+          <AppRoutes />
+        </BrowserRouter>
+      </FinanceProvider>
+    </AuthProvider>
   );
 }
 

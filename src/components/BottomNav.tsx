@@ -1,4 +1,4 @@
-import { Home, PlusCircle, ArrowLeftRight, MessageCircle, BarChart3, User } from 'lucide-react';
+import { Home, PlusCircle, ArrowLeftRight, BarChart3, User } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 const tabs = [
@@ -6,7 +6,6 @@ const tabs = [
   { path: '/add', icon: PlusCircle, label: 'Add' },
   { path: '/monthly', icon: BarChart3, label: 'Monthly' },
   { path: '/lending', icon: ArrowLeftRight, label: 'Lending' },
-  { path: '/ask', icon: MessageCircle, label: 'Ask AI' },
   { path: '/profile', icon: User, label: 'Profile' },
 ];
 
