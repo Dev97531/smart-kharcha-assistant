@@ -1,6 +1,8 @@
+import { useState } from 'react';
 import { SummaryCards } from '@/components/SummaryCards';
 import { DonutChart } from '@/components/DonutChart';
 import { RecentTransactions } from '@/components/RecentTransactions';
+import { VoiceOrb } from '@/components/VoiceOrb';
 import { useFinance } from '@/contexts/FinanceContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useBackup } from '@/hooks/useBackup';
@@ -14,6 +16,7 @@ export default function Dashboard() {
   const { backup, isBacking } = useBackup();
   const { isDark, toggle: toggleTheme } = useTheme();
   const navigate = useNavigate();
+  const [voiceOpen, setVoiceOpen] = useState(false);
 
   return (
     <div className="page-container">
@@ -59,13 +62,16 @@ export default function Dashboard() {
         <DonutChart data={monthByCategory} title="This Month" total={monthTotal} />
       </div>
 
-      {/* Floating mic */}
+      {/* Floating mic — launches voice orb */}
       <button
-        onClick={() => navigate('/add')}
-        className="mic-button w-14 h-14 fixed bottom-24 right-5 z-40"
+        onClick={() => setVoiceOpen(true)}
+        className="mic-button w-14 h-14 fixed bottom-24 right-5 z-40 hover:scale-105 transition-transform"
       >
         <Mic size={24} className="text-primary-foreground" />
       </button>
+
+      {/* Voice Orb overlay */}
+      <VoiceOrb open={voiceOpen} onClose={() => setVoiceOpen(false)} />
 
       {/* Recent */}
       <div className="mt-6">
