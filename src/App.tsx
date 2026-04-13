@@ -4,6 +4,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { FinanceProvider } from "@/contexts/FinanceContext";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { LanguageProvider } from "@/contexts/LanguageContext";
 import { BottomNav } from "@/components/BottomNav";
 import { useTheme } from "@/hooks/useTheme";
 import Index from "./pages/Index";
@@ -51,13 +52,15 @@ function ThemedApp() {
   useTheme();
 
   return (
-    <AuthProvider>
-      <FinanceProvider>
-        <BrowserRouter>
-          <AppRoutes />
-        </BrowserRouter>
-      </FinanceProvider>
-    </AuthProvider>
+    <LanguageProvider>
+      <AuthProvider>
+        <FinanceProvider>
+          <BrowserRouter>
+            <AppRoutes />
+          </BrowserRouter>
+        </FinanceProvider>
+      </AuthProvider>
+    </LanguageProvider>
   );
 }
 

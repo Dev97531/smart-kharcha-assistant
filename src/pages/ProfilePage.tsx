@@ -1,17 +1,25 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { useFinance } from '@/contexts/FinanceContext';
 import { useBackup } from '@/hooks/useBackup';
-import { LogOut, Cloud, Loader2, User, Mail, Calendar } from 'lucide-react';
+import { useLanguage, type Language } from '@/contexts/LanguageContext';
+import { LogOut, Cloud, Loader2, User, Mail, Calendar, Globe } from 'lucide-react';
 import { format } from 'date-fns';
 import { CATEGORY_ICONS, type Category } from '@/types/finance';
 import { useMemo } from 'react';
+
+const LANG_OPTIONS: { value: Language; label: string; desc: string }[] = [
+  { value: 'en', label: 'English', desc: 'All replies in English' },
+  { value: 'hi', label: 'हिन्दी', desc: 'सभी जवाब हिंदी में' },
+  { value: 'auto', label: 'Auto', desc: 'Detect from speech' },
+];
 
 export default function ProfilePage() {
   const { user, signOut } = useAuth();
   const { expenses, lending } = useFinance();
   const { backup, isBacking } = useBackup();
+  const { language, setLanguage, t } = useLanguage();
 
-  const fmt = (n: number) => '₹' + n.toLocaleString('en-IN');
+  const fmtAmount = (n: number) => '₹' + n.toLocaleString('en-IN');
 
   const stats = useMemo(() => {
     const total = expenses.reduce((s, e) => s + e.amount, 0);
@@ -50,7 +58,7 @@ export default function ProfilePage() {
         {user?.created_at && (
           <div className="flex items-center justify-center gap-1.5 mt-1">
             <Calendar size={12} className="text-muted-foreground" />
-            <p className="text-xs text-muted-foreground">Joined {format(new Date(user.created_at), 'MMM yyyy')}</p>
+            <p className="text-xs text-muted-foreground">{t('joined')} {format(new Date(user.created_at), 'MMM yyyy')}</p>
           </div>
         )}
       </div>
@@ -58,22 +66,46 @@ export default function ProfilePage() {
       {/* Stats */}
       <div className="grid grid-cols-2 gap-3 mb-4">
         <div className="stat-card fade-in">
-          <span className="text-xs text-muted-foreground">Total Expenses</span>
+          <span className="text-xs text-muted-foreground">{t('total_expenses')}</span>
           <p className="text-xl font-bold text-foreground">{stats.totalExpenses}</p>
         </div>
         <div className="stat-card fade-in">
-          <span className="text-xs text-muted-foreground">Total Spent</span>
-          <p className="text-xl font-bold text-primary">{fmt(stats.totalSpent)}</p>
+          <span className="text-xs text-muted-foreground">{t('total_spent')}</span>
+          <p className="text-xl font-bold text-primary">{fmtAmount(stats.totalSpent)}</p>
         </div>
         <div className="stat-card fade-in">
-          <span className="text-xs text-muted-foreground">Active Lending</span>
+          <span className="text-xs text-muted-foreground">{t('active_lending')}</span>
           <p className="text-xl font-bold text-accent">{stats.activeLending}</p>
         </div>
         <div className="stat-card fade-in">
-          <span className="text-xs text-muted-foreground">Top Category</span>
+          <span className="text-xs text-muted-foreground">{t('top_category')}</span>
           <p className="text-lg font-bold text-foreground">
             {stats.topCategory ? `${CATEGORY_ICONS[stats.topCategory]} ${stats.topCategory}` : '—'}
           </p>
+        </div>
+      </div>
+
+      {/* Language selector */}
+      <div className="glass-card p-4 mb-2 fade-in">
+        <div className="flex items-center gap-2 mb-3">
+          <Globe size={16} className="text-primary" />
+          <h2 className="text-sm font-semibold text-foreground">{t('language')}</h2>
+        </div>
+        <div className="flex gap-2">
+          {LANG_OPTIONS.map(opt => (
+            <button
+              key={opt.value}
+              onClick={() => setLanguage(opt.value)}
+              className={`flex-1 py-2 px-2 rounded-lg text-center transition-colors ${
+                language === opt.value
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-muted/50 text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              <p className="text-sm font-medium">{opt.label}</p>
+              <p className="text-[10px] mt-0.5 opacity-80">{opt.desc}</p>
+            </button>
+          ))}
         </div>
       </div>
 
@@ -86,8 +118,8 @@ export default function ProfilePage() {
         >
           {isBacking ? <Loader2 size={18} className="animate-spin text-primary" /> : <Cloud size={18} className="text-primary" />}
           <div className="text-left">
-            <p className="text-sm font-medium text-foreground">Backup to Cloud</p>
-            <p className="text-xs text-muted-foreground">Save your data securely</p>
+            <p className="text-sm font-medium text-foreground">{t('backup_cloud')}</p>
+            <p className="text-xs text-muted-foreground">{t('save_data')}</p>
           </div>
         </button>
 
@@ -97,8 +129,8 @@ export default function ProfilePage() {
         >
           <LogOut size={18} className="text-destructive" />
           <div className="text-left">
-            <p className="text-sm font-medium text-destructive">Sign Out</p>
-            <p className="text-xs text-muted-foreground">Log out of your account</p>
+            <p className="text-sm font-medium text-destructive">{t('sign_out')}</p>
+            <p className="text-xs text-muted-foreground">{t('log_out')}</p>
           </div>
         </button>
       </div>
