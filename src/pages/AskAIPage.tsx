@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Send, Sparkles, Mic, MicOff, Loader2, X } from 'lucide-react';
 import { useFinance } from '@/contexts/FinanceContext';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import type { Category } from '@/types/finance';
 
@@ -84,11 +85,18 @@ export default function AskAIPage() {
         role: m.role, content: m.content,
       }));
 
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData.session?.access_token;
+      if (!accessToken) {
+        toast.error('Please sign in to use AI chat');
+        setIsLoading(false);
+        return;
+      }
       const resp = await fetch(CHAT_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          Authorization: `Bearer ${accessToken}`,
         },
         body: JSON.stringify({ messages: allMessages, financeContext }),
       });
