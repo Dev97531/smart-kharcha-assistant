@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { X, Mic, MicOff } from 'lucide-react';
 import { useFinance } from '@/contexts/FinanceContext';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import type { Category } from '@/types/finance';
 
@@ -111,11 +112,18 @@ export function VoiceOrb({ open, onClose }: Props) {
     const newHistory = [...conversationHistory, { role: 'user', content: userText }];
 
     try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData.session?.access_token;
+      if (!accessToken) {
+        toast.error('Please sign in to use voice assistant');
+        setOrbState('idle');
+        return;
+      }
       const resp = await fetch(CHAT_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          Authorization: `Bearer ${accessToken}`,
         },
         body: JSON.stringify({ messages: newHistory, financeContext, language }),
       });
