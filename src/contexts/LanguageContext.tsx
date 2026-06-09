@@ -48,7 +48,7 @@ const translations: Record<string, Record<string, string>> = {
     'transactions': 'transactions',
     'transaction': 'transaction',
     'joined': 'Joined',
-    'smart_kharcha': 'Smart Kharcha',
+    'smart_kharcha': 'Smart Kharcha with AI',
     'your_ai_finance': 'Your AI Finance Assistant',
   },
   hi: {
@@ -84,7 +84,7 @@ const translations: Record<string, Record<string, string>> = {
     'transactions': 'लेनदेन',
     'transaction': 'लेनदेन',
     'joined': 'जुड़े',
-    'smart_kharcha': 'स्मार्ट खर्चा',
+    'smart_kharcha': 'स्मार्ट खर्चा विद AI',
     'your_ai_finance': 'आपका AI वित्त सहायक',
   },
 };
