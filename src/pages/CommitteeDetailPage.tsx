@@ -158,10 +158,9 @@ export default function CommitteeDetailPage() {
         recipient_member_id: payoutRecipient,
         payout_date: payoutDate,
         method: payoutMethod,
-        amount: totalPool / committee.total_months * committee.total_months === totalPool ? totalPool / 1 : monthly * members.length,
-        // Pool given per month equals monthly * number of members:
+        amount: monthly * members.length,
         note: payoutNote.trim() || undefined,
-      } as any);
+      });
       toast.success('Payout recorded');
       setPayoutDialog(null);
     } catch (e: any) {
