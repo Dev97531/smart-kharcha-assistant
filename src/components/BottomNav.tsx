@@ -1,12 +1,12 @@
-import { Home, PlusCircle, ArrowLeftRight, BarChart3, User } from 'lucide-react';
+import { Home, Users, ArrowLeftRight, BarChart3, User } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 const tabs = [
-  { path: '/', icon: Home, label: 'Home' },
-  { path: '/add', icon: PlusCircle, label: 'Add' },
-  { path: '/monthly', icon: BarChart3, label: 'Monthly' },
-  { path: '/lending', icon: ArrowLeftRight, label: 'Lending' },
-  { path: '/profile', icon: User, label: 'Profile' },
+  { path: '/', icon: Home, label: 'Home', match: (p: string) => p === '/' },
+  { path: '/monthly', icon: BarChart3, label: 'Monthly', match: (p: string) => p.startsWith('/monthly') },
+  { path: '/committee', icon: Users, label: 'Committee', match: (p: string) => p.startsWith('/committee') },
+  { path: '/lending', icon: ArrowLeftRight, label: 'Lending', match: (p: string) => p.startsWith('/lending') },
+  { path: '/profile', icon: User, label: 'Profile', match: (p: string) => p.startsWith('/profile') },
 ];
 
 export function BottomNav() {
@@ -16,8 +16,8 @@ export function BottomNav() {
   return (
     <nav className="bottom-nav">
       <div className="flex items-center justify-around max-w-lg mx-auto py-2">
-        {tabs.map(({ path, icon: Icon, label }) => {
-          const active = location.pathname === path;
+        {tabs.map(({ path, icon: Icon, label, match }) => {
+          const active = match(location.pathname);
           return (
             <button
               key={path}

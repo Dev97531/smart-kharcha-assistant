@@ -293,7 +293,7 @@ export default function AskAIPage() {
               <Sparkles size={16} className="text-primary-foreground" />
             </div>
             <div>
-              <h1 className="text-lg font-bold text-foreground">Smart Kharcha AI</h1>
+              <h1 className="text-lg font-bold text-foreground">Smart Kharcha with AI</h1>
             </div>
           </div>
 

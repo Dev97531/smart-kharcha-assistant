@@ -13,7 +13,7 @@ export default function LoginPage() {
             <Wallet size={36} className="text-primary-foreground" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Smart Kharcha</h1>
+            <h1 className="text-2xl font-bold text-foreground">Smart Kharcha with AI</h1>
             <p className="text-sm text-muted-foreground mt-1">Your AI Finance Assistant</p>
           </div>
         </div>

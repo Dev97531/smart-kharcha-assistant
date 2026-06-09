@@ -23,7 +23,7 @@ export default function Dashboard() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-lg font-bold text-foreground">Smart Kharcha</h1>
+          <h1 className="text-lg font-bold text-foreground">Smart Kharcha with AI</h1>
           <p className="text-xs text-muted-foreground truncate max-w-[180px]">
             {user?.email || 'Your AI Finance Assistant'}
           </p>

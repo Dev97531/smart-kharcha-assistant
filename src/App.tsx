@@ -13,6 +13,9 @@ import LendingPage from "./pages/LendingPage";
 import MonthlySpend from "./pages/MonthlySpend";
 import ProfilePage from "./pages/ProfilePage";
 import LoginPage from "./pages/LoginPage";
+import CommitteePage from "./pages/CommitteePage";
+import CreateCommitteePage from "./pages/CreateCommitteePage";
+import CommitteeDetailPage from "./pages/CommitteeDetailPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -40,6 +43,9 @@ function AppRoutes() {
         <Route path="/lending" element={<LendingPage />} />
         <Route path="/monthly" element={<MonthlySpend />} />
         <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/committee" element={<CommitteePage />} />
+        <Route path="/committee/new" element={<CreateCommitteePage />} />
+        <Route path="/committee/:id" element={<CommitteeDetailPage />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
       <BottomNav />
