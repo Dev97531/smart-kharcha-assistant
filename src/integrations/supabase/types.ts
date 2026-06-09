@@ -14,13 +14,216 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      committee_contributions: {
+        Row: {
+          committee_id: string
+          created_at: string
+          id: string
+          marked_by: string | null
+          member_id: string
+          method: string | null
+          month_number: number
+          note: string | null
+          paid: boolean
+          paid_on: string | null
+          updated_at: string
+        }
+        Insert: {
+          committee_id: string
+          created_at?: string
+          id?: string
+          marked_by?: string | null
+          member_id: string
+          method?: string | null
+          month_number: number
+          note?: string | null
+          paid?: boolean
+          paid_on?: string | null
+          updated_at?: string
+        }
+        Update: {
+          committee_id?: string
+          created_at?: string
+          id?: string
+          marked_by?: string | null
+          member_id?: string
+          method?: string | null
+          month_number?: number
+          note?: string | null
+          paid?: boolean
+          paid_on?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "committee_contributions_committee_id_fkey"
+            columns: ["committee_id"]
+            isOneToOne: false
+            referencedRelation: "committees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "committee_contributions_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "committee_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      committee_members: {
+        Row: {
+          committee_id: string
+          created_at: string
+          id: string
+          name: string
+          phone: string | null
+          rotation_order: number | null
+          user_id: string | null
+        }
+        Insert: {
+          committee_id: string
+          created_at?: string
+          id?: string
+          name: string
+          phone?: string | null
+          rotation_order?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          committee_id?: string
+          created_at?: string
+          id?: string
+          name?: string
+          phone?: string | null
+          rotation_order?: number | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "committee_members_committee_id_fkey"
+            columns: ["committee_id"]
+            isOneToOne: false
+            referencedRelation: "committees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      committee_payouts: {
+        Row: {
+          amount: number
+          committee_id: string
+          created_at: string
+          id: string
+          method: string
+          month_number: number
+          note: string | null
+          payout_date: string
+          recipient_member_id: string
+          recorded_by: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          committee_id: string
+          created_at?: string
+          id?: string
+          method: string
+          month_number: number
+          note?: string | null
+          payout_date: string
+          recipient_member_id: string
+          recorded_by?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          committee_id?: string
+          created_at?: string
+          id?: string
+          method?: string
+          month_number?: number
+          note?: string | null
+          payout_date?: string
+          recipient_member_id?: string
+          recorded_by?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "committee_payouts_committee_id_fkey"
+            columns: ["committee_id"]
+            isOneToOne: false
+            referencedRelation: "committees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "committee_payouts_recipient_member_id_fkey"
+            columns: ["recipient_member_id"]
+            isOneToOne: false
+            referencedRelation: "committee_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      committees: {
+        Row: {
+          created_at: string
+          id: string
+          monthly_amount: number
+          name: string
+          note: string | null
+          organizer_id: string
+          organizer_name: string
+          payout_method: string
+          start_month: string
+          status: string
+          total_months: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          monthly_amount: number
+          name: string
+          note?: string | null
+          organizer_id: string
+          organizer_name: string
+          payout_method: string
+          start_month: string
+          status?: string
+          total_months: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          monthly_amount?: number
+          name?: string
+          note?: string | null
+          organizer_id?: string
+          organizer_name?: string
+          payout_method?: string
+          start_month?: string
+          status?: string
+          total_months?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      is_committee_organizer: {
+        Args: { _committee_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_committee_participant: {
+        Args: { _committee_id: string; _user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never
