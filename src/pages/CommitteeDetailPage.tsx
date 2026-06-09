@@ -94,7 +94,6 @@ export default function CommitteeDetailPage() {
   }
 
   const monthly = Number(committee.monthly_amount);
-  const totalPool = monthly * committee.total_months;
   const monthsCompleted = payouts.length;
 
   const handleToggleContribution = async (member: CommitteeMember, monthNum: number) => {
